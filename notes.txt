@@ -1,0 +1,4 @@
+docker run -d busybox sh -xc "while true; do echo meow; sleep 10; done"
+
+zookeeper-server-start /usr/local/etc/kafka/zookeeper.properties & kafka-server-start /usr/local/etc/kafka/server.properties
+kafka-console-consumer --bootstrap-server 0.0.0.0:9092  --topic build-log-events
