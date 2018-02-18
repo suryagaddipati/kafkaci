@@ -33,10 +33,11 @@ object Main {
     val builder = new StreamsBuilderS()
     val githubWebhooks = builder.stream[String, String]("Github-Webhooks")
 
-    val webhookCounts: KTableS[String, Long] = githubWebhooks.groupBy((k,v) =>  k ).count()
+    val webhookCounts: KTableS[String, Long] = githubWebhooks
+      .groupBy((k,v) =>  v )
+      .count
 
-    val webhookCountStream: KStreamS[String, Long] =    webhookCounts.toStream //.to("Github-Webhooks-Count")
-    webhookCountStream.to("Github-Webhooks-Count",Produced.`with`(stringSerde,longSerde))
+      webhookCounts.toStream.to("Github-Webhooks-Count",Produced.`with`(stringSerde,longSerde))
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
     streams.start()
