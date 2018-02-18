@@ -12,6 +12,7 @@ import com.lightbend.kafka.scala.streams.{KStreamS, KTableS, StreamsBuilderS}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{Serde, Serdes}
 import org.apache.kafka.streams.kstream.Produced
+import org.apache.kafka.streams.state.{QueryableStoreTypes, ReadOnlyKeyValueStore}
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 
 import scala.io.StdIn
@@ -19,6 +20,10 @@ import scala.io.StdIn
 object Main {
 
   val appServerPort = 9000
+  val GITHUB_WEBHOOKS = "Github-Webhooks"
+  val GITHUB_WEBHOOKS_COUNT = "Github-Webhooks-Count"
+
+
   def main(args: Array[String]) {
 
     implicit val system = ActorSystem("my-system")
@@ -31,21 +36,22 @@ object Main {
 
 
     val builder = new StreamsBuilderS()
-    val githubWebhooks = builder.stream[String, String]("Github-Webhooks")
+    val githubWebhooks = builder.stream[String, String](GITHUB_WEBHOOKS)
 
-    val webhookCounts: KTableS[String, Long] = githubWebhooks
-      .groupBy((k,v) =>  v )
-      .count
+    val webhookCounts: KTableS[String, Long] = githubWebhooks.groupBy((k,v) =>  v ).count(GITHUB_WEBHOOKS_COUNT)
 
-      webhookCounts.toStream.to("Github-Webhooks-Count",Produced.`with`(stringSerde,longSerde))
+//    webhookCounts.toStream.to(GITHUB_WEBHOOKS_COUNT,Produced.`with`(stringSerde,longSerde))
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
     streams.start()
+    Thread.sleep(8000)
+    val songCountStore = streams.store(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long])
 
     val route =
       path("hello") {
         get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+          val count = songCountStore.get("suryagaddipati/meow")
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1> Count: ${count}</h1>"))
         }
       }
 
