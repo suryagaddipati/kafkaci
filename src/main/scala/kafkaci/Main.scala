@@ -38,11 +38,13 @@ object Main {
     val builder = new StreamsBuilderS()
     val githubWebhooks = builder.stream[String, String](GITHUB_WEBHOOKS)
 
+//    githubWebhooks.map((k,v) => )
+
     val webhookCounts: KTableS[String, Long] = githubWebhooks.groupBy((k,v) =>  v ).count(GITHUB_WEBHOOKS_COUNT)
 
-//    webhookCounts.toStream.to(GITHUB_WEBHOOKS_COUNT,Produced.`with`(stringSerde,longSerde))
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
+    streams.cleanUp()
     streams.start()
     Thread.sleep(8000)
     val songCountStore = streams.store(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long])
@@ -61,7 +63,7 @@ object Main {
     StdIn.readLine() // let it run until user presses return
     bindingFuture
       .flatMap(_.unbind()) // trigger unbinding from the port
-      .onComplete(_ => system.terminate()) // and shutdown when done
+      .onComplete(_ => {system.terminate(); streams.close()}) // and shutdown when done
   }
 
 
