@@ -9,7 +9,9 @@ import akka.stream.ActorMaterializer
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import com.lightbend.kafka.scala.streams.{KGroupedStreamS, KStreamS, KTableS, StreamsBuilderS}
-import kafkaci.models.{GithubWebhook, GithubWebhookSerde}
+import kafkaci.models.Build
+import kafkaci.models.github.GithubWebhook
+import kafkaci.models.Serdes._
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{Serde, Serdes}
 import org.apache.kafka.streams.kstream.Produced
@@ -25,6 +27,7 @@ object Main {
   val GITHUB_WEBHOOKS_COUNT = "Github-Webhooks-Count"
 
 
+
   def main(args: Array[String]) {
 
     implicit val system = ActorSystem("my-system")
@@ -35,10 +38,10 @@ object Main {
 
 
     val builder = new StreamsBuilderS()
-    val githubWebhooks = builder.stream[String, GithubWebhook](GITHUB_WEBHOOKS,Consumed.`with`(Serdes.String,GithubWebhookSerde()))
+    val githubWebhooks: KStreamS[String,GithubWebhook] = builder.stream[String, GithubWebhook](GITHUB_WEBHOOKS,Consumed.`with`(Serdes.String,serde))
 
 
-    val x: KTableS[String,Long] = githubWebhooks.mapValues(h => h.repo).groupBy((k,v) =>  v ).count(GITHUB_WEBHOOKS_COUNT)
+    val githubWebhookCount: KTableS[String,Long] = githubWebhooks.mapValues(h => h.repo).groupBy((k,v) =>  v ).count(GITHUB_WEBHOOKS_COUNT)
 
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
@@ -46,6 +49,7 @@ object Main {
     streams.start()
     Thread.sleep(8000)
     val songCountStore = streams.store(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long])
+    githubWebhooks.leftJoin(githubWebhookCount,(hook:GithubWebhook,count: Long)  => Build(count+1,hook)).to("build")
 
     val route =
       path("hello") {
