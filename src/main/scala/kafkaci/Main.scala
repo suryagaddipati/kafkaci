@@ -8,12 +8,13 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
-import com.lightbend.kafka.scala.streams.{KStreamS, KTableS, StreamsBuilderS}
+import com.lightbend.kafka.scala.streams.{KGroupedStreamS, KStreamS, KTableS, StreamsBuilderS}
+import kafkaci.models.{GithubWebhook, GithubWebhookSerde}
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.{Serde, Serdes}
 import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.state.{QueryableStoreTypes, ReadOnlyKeyValueStore}
-import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
+import org.apache.kafka.streams.{Consumed, KafkaStreams, StreamsConfig}
 
 import scala.io.StdIn
 
@@ -31,16 +32,13 @@ object Main {
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    implicit val stringSerde = Serdes.String()
-    implicit val longSerde: Serde[Long] = Serdes.Long().asInstanceOf[Serde[Long]]
 
 
     val builder = new StreamsBuilderS()
-    val githubWebhooks = builder.stream[String, String](GITHUB_WEBHOOKS)
+    val githubWebhooks = builder.stream[String, GithubWebhook](GITHUB_WEBHOOKS,Consumed.`with`(Serdes.String,GithubWebhookSerde()))
 
-//    githubWebhooks.map((k,v) => )
 
-    val webhookCounts: KTableS[String, Long] = githubWebhooks.groupBy((k,v) =>  v ).count(GITHUB_WEBHOOKS_COUNT)
+    val x: KTableS[String,Long] = githubWebhooks.mapValues(h => h.repo).groupBy((k,v) =>  v ).count(GITHUB_WEBHOOKS_COUNT)
 
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
