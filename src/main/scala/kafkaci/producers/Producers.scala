@@ -2,18 +2,25 @@ package kafkaci.producers
 
 import java.util.Properties
 
+import akka.Done
+import akka.actor.ActorSystem
+import akka.kafka.ProducerSettings
+import akka.kafka.scaladsl.Producer
+import akka.stream.scaladsl.Source
 import com.ovoenergy.kafka.serialization.circe._
 import kafkaci.Topics._
 import kafkaci.models.Job
 import kafkaci.models.github.GithubWebhook
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
+
+import scala.concurrent.Future
 // Import the Circe generic support
 import io.circe.generic.auto._
 
 
 
-object GithubWebhookProducer extends App{
+object Producers extends App{
   val props = new Properties
   props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
 
@@ -28,9 +35,12 @@ object GithubWebhookProducer extends App{
     }
   }
 
-  private def jobCreateRequestProducer = {
-    val songProducer = new KafkaProducer[String, Job](props, new StringSerializer, circeJsonSerializer[Job])
-    songProducer.send(new ProducerRecord[String, Job](JOB_CREATE_REQUESTS, "suryagaddipati/meow",Job("suryagaddipati/meow")))
+  def sendJobCreateRequest(reponame: String, as: ActorSystem) = {
+    val producerSettings = ProducerSettings(as, new StringSerializer, new StringSerializer)
+      .withBootstrapServers("localhost:9092")
+     Source.single(reponame).map { repoName => new ProducerRecord[String, String](JOB_CREATE_REQUESTS,repoName, repoName) }
+      .runWith(Producer.plainSink(producerSettings))
   }
 
+      //new KafkaProducer[String, String](props)send(new ProducerRecord[String, String](JOB_CREATE_REQUESTS, reponame,reponame))
 }

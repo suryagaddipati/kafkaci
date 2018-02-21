@@ -16,6 +16,7 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "com.ovoenergy" %% "kafka-serialization-core" % kafkaSerializationV,
       "com.ovoenergy" %% "kafka-serialization-circe" % kafkaSerializationV,
+      "com.typesafe.akka" %% "akka-stream-kafka" % "0.17",
       "io.circe" %% "circe-core" % "0.9.1",
       "io.circe" %% "circe-generic"  % "0.9.1",
       "io.circe" %% "circe-parser"  % "0.9.1",

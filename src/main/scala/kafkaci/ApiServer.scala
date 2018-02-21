@@ -6,6 +6,7 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import kafkaci.Topics._
+import kafkaci.producers.Producers
 import kafkaci.util.StoreHelpers._
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.state.QueryableStoreTypes
@@ -17,14 +18,14 @@ object ApiServer  extends App {
 
     implicit val system = ActorSystem("my-system")
     implicit val materializer = ActorMaterializer()
-    // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
+
     val songCountStore = waitUntilStoreIsQueryable(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long],streams)
 
     val route =
       path("count") {
         get {
-          val count = songCountStore.get("suryagaddipati/meow")
+          val count =  songCountStore.get("suryagaddipati/meow")
           complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1> Count: ${count}</h1>"))
         }
       } ~
@@ -32,10 +33,7 @@ object ApiServer  extends App {
           path("create-job") {
             post {
               (formField('repoName)) { (repoName) =>
-                //                val key = hookId + "+" + event
-                //                val done = Source.single((key, payload)).map { elem => new ProducerRecord[String, String](config.kafkaTopic, elem._1, elem._2) }
-                //                  .runWith(Producer.plainSink(producerSettings))
-                complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Job Created"))
+                complete(Producers.sendJobCreateRequest(repoName, system))
               }
             }
           }
