@@ -2,41 +2,17 @@ package kafkaci
 
 import java.util.Properties
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.stream.ActorMaterializer
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
 import com.lightbend.kafka.scala.streams.{KGroupedStreamS, KStreamS, KTableS, StreamsBuilderS}
+import kafkaci.Topics._
 import kafkaci.models.Build
-import kafkaci.models.github.GithubWebhook
 import kafkaci.models.Serdes._
+import kafkaci.models.github.GithubWebhook
 import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.common.serialization.{Serde, Serdes}
-import org.apache.kafka.streams.kstream.Produced
-import org.apache.kafka.streams.state.{QueryableStoreTypes, ReadOnlyKeyValueStore}
+import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.{Consumed, KafkaStreams, StreamsConfig}
-import  Topics._
-
-import scala.io.StdIn
 
 object Main {
-
-  val appServerPort = 9000
-
-
-
-
   def main(args: Array[String]) {
-
-    implicit val system = ActorSystem("my-system")
-    implicit val materializer = ActorMaterializer()
-    // needed for the future flatMap/onComplete in the end
-    implicit val executionContext = system.dispatcher
-
-
-
     val builder = new StreamsBuilderS()
 
     //repo-name/hook
@@ -51,7 +27,7 @@ object Main {
 
     //repo-name/builds
     val buildTable: KGroupedStreamS[String,Build] = builds.groupBy((k,v)=>k)
-
+    buildTable.aggregate()
 
 
 //      .to("build", Produced.`with`(Serdes.String,buildSerde))
@@ -59,28 +35,13 @@ object Main {
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
     streams.cleanUp()
     streams.start()
-    val songCountStore = waitUntilStoreIsQueryable(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long],streams)
+    ApiServer.start(streams)
 
-
-    val route =
-      path("hello") {
-        get {
-          val count = songCountStore.get("suryagaddipati/meow")
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1> Count: ${count}</h1>"))
-        }
-      }
-
-    val bindingFuture = Http().bindAndHandle(route, "localhost", appServerPort)
-
-    println(s"Server online at http://localhost:9000/\nPress RETURN to stop...")
-    StdIn.readLine() // let it run until user presses return
-    bindingFuture
-      .flatMap(_.unbind()) // trigger unbinding from the port
-      .onComplete(_ => {system.terminate(); streams.close()}) // and shutdown when done
   }
 
 
   def streamsConfiguration(): Properties ={
+    val appServerPort = 9000
     val streamsConfiguration = new Properties()
     streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "KafkaCI")
 
@@ -95,17 +56,5 @@ object Main {
     streamsConfiguration
   }
 
-  import org.apache.kafka.streams.KafkaStreams
-  import org.apache.kafka.streams.errors.InvalidStateStoreException
-  import org.apache.kafka.streams.state.QueryableStoreType
 
-  def waitUntilStoreIsQueryable[T](storeName: String, queryableStoreType: QueryableStoreType[T], streams: KafkaStreams): T =
-    try
-      streams.store(storeName, queryableStoreType)
-    catch {
-      case ignored: InvalidStateStoreException =>
-        // store not yet ready for querying
-        Thread.sleep(100)
-        waitUntilStoreIsQueryable(storeName,queryableStoreType,streams)
-    }
 }
