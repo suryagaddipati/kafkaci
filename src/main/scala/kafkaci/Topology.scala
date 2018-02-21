@@ -15,12 +15,13 @@ object Topology {
 
     //repo-name/hook
     val githubWebhooks: KStreamS[String,GithubWebhook] = builder.stream[String, GithubWebhook](GITHUB_WEBHOOKS,Consumed.`with`(Serdes.String,githubWebhookSerde))
-
-    val jobCreateRequests: KStreamS[String,String] = builder.stream[String, String](PROJECT_CREATE_REQUESTS)
-    jobCreateRequests.map((k,v) => (k,Project(k))).to(PROJECTS,Produced.`with`(Serdes.String,projectSerde))
-
-    //repo-name/count
     val githubWebhookCount: KTableS[String,Long] = githubWebhooks.map((k,v) => (k,v.repo)).groupBy((k,v) =>  k ).count(GITHUB_WEBHOOKS_COUNT)
+
+    val projectCreateRequests: KStreamS[String,String] = builder.stream[String, String](PROJECT_CREATE_REQUESTS)
+    val projects :KStreamS[String,Project] = projectCreateRequests.map((k,v) => (k,Project(k)))
+    projects.to(PROJECTS,Produced.`with`(Serdes.String,projectSerde))
+
+    val projectTable:KTableS[String,Project] = builder.table(PROJECTS)
 
 
     //repo-name/build

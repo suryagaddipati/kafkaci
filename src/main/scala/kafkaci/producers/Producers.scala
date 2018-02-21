@@ -31,12 +31,7 @@ object Producers extends App{
     }
   }
 
-  def sendJobCreateRequest(reponame: String, as: ActorSystem) = {
-    val producerSettings = ProducerSettings(as, new StringSerializer, new StringSerializer)
-      .withBootstrapServers("localhost:9092")
-     Source.single(reponame).map { repoName => new ProducerRecord[String, String](PROJECT_CREATE_REQUESTS,repoName, repoName) }
-      .runWith(Producer.plainSink(producerSettings))
-  }
+
 
       //new KafkaProducer[String, String](props)send(new ProducerRecord[String, String](JOB_CREATE_REQUESTS, reponame,reponame))
 }
