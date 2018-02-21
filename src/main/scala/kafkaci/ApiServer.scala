@@ -39,9 +39,6 @@ object ApiServer  extends App {
           }
         }
 
-
-
-
     val bindingFuture = Http().bindAndHandle(route, "localhost", 9000) // get this from config
 
     println(s"Server online at http://localhost:9000/\nPress RETURN to stop...")

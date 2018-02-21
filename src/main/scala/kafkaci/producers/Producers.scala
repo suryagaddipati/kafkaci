@@ -2,19 +2,15 @@ package kafkaci.producers
 
 import java.util.Properties
 
-import akka.Done
 import akka.actor.ActorSystem
 import akka.kafka.ProducerSettings
 import akka.kafka.scaladsl.Producer
 import akka.stream.scaladsl.Source
 import com.ovoenergy.kafka.serialization.circe._
 import kafkaci.Topics._
-import kafkaci.models.Job
 import kafkaci.models.github.GithubWebhook
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.kafka.common.serialization.StringSerializer
-
-import scala.concurrent.Future
 // Import the Circe generic support
 import io.circe.generic.auto._
 
@@ -38,7 +34,7 @@ object Producers extends App{
   def sendJobCreateRequest(reponame: String, as: ActorSystem) = {
     val producerSettings = ProducerSettings(as, new StringSerializer, new StringSerializer)
       .withBootstrapServers("localhost:9092")
-     Source.single(reponame).map { repoName => new ProducerRecord[String, String](JOB_CREATE_REQUESTS,repoName, repoName) }
+     Source.single(reponame).map { repoName => new ProducerRecord[String, String](PROJECT_CREATE_REQUESTS,repoName, repoName) }
       .runWith(Producer.plainSink(producerSettings))
   }
 

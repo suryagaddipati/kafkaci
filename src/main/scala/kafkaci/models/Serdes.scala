@@ -11,6 +11,6 @@ import kafkaci.models.github.GithubWebhook
 object Serdes {
   def githubWebhookSerde = new WrapperSerde[GithubWebhook](circeJsonSerializer[GithubWebhook], circeJsonDeserializer[GithubWebhook])
   def buildSerde = new WrapperSerde[Build](circeJsonSerializer[Build], circeJsonDeserializer[Build])
-  def jobSerde = new WrapperSerde[Job](circeJsonSerializer[Job], circeJsonDeserializer[Job])
+  def projectSerde = new WrapperSerde[Project](circeJsonSerializer[Project], circeJsonDeserializer[Project])
 //  def serdes[T] = new WrapperSerde[T](circeJsonSerializer[T], circeJsonDeserializer[T])
 }

@@ -18,7 +18,6 @@ object Main {
     streams.cleanUp()
     streams.start()
     ApiServer.start(streams)
-
   }
 
 
