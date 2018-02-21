@@ -38,18 +38,29 @@ object Main {
 
 
     val builder = new StreamsBuilderS()
-    val githubWebhooks: KStreamS[String,GithubWebhook] = builder.stream[String, GithubWebhook](GITHUB_WEBHOOKS,Consumed.`with`(Serdes.String,serde))
+
+    //repo-name/hook
+    val githubWebhooks: KStreamS[String,GithubWebhook] = builder.stream[String, GithubWebhook](GITHUB_WEBHOOKS,Consumed.`with`(Serdes.String,githubWebhookSerde))
 
 
-    val githubWebhookCount: KTableS[String,Long] = githubWebhooks.mapValues(h => h.repo).groupBy((k,v) =>  v ).count(GITHUB_WEBHOOKS_COUNT)
+    //repo-name/count
+    val githubWebhookCount: KTableS[String,Long] = githubWebhooks.map((k,v) => (k,v.repo)).groupBy((k,v) =>  k ).count(GITHUB_WEBHOOKS_COUNT)
 
+    //repo-name/build
+    val builds: KStreamS[String,Build] = githubWebhooks.leftJoin(githubWebhookCount,(hook:GithubWebhook,count: Long)  => Build(count+1,hook))
+
+    //repo-name/builds
+    val buildTable: KGroupedStreamS[String,Build] = builds.groupBy((k,v)=>k)
+
+
+
+//      .to("build", Produced.`with`(Serdes.String,buildSerde))
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
     streams.cleanUp()
     streams.start()
-    Thread.sleep(8000)
-    val songCountStore = streams.store(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long])
-    githubWebhooks.leftJoin(githubWebhookCount,(hook:GithubWebhook,count: Long)  => Build(count+1,hook)).to("build")
+    val songCountStore = waitUntilStoreIsQueryable(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long],streams)
+
 
     val route =
       path("hello") {
@@ -83,4 +94,18 @@ object Main {
     streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)
     streamsConfiguration
   }
+
+  import org.apache.kafka.streams.KafkaStreams
+  import org.apache.kafka.streams.errors.InvalidStateStoreException
+  import org.apache.kafka.streams.state.QueryableStoreType
+
+  def waitUntilStoreIsQueryable[T](storeName: String, queryableStoreType: QueryableStoreType[T], streams: KafkaStreams): T =
+    try
+      streams.store(storeName, queryableStoreType)
+    catch {
+      case ignored: InvalidStateStoreException =>
+        // store not yet ready for querying
+        Thread.sleep(100)
+        waitUntilStoreIsQueryable(storeName,queryableStoreType,streams)
+    }
 }

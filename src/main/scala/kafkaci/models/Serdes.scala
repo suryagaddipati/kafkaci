@@ -9,6 +9,7 @@ import io.circe.syntax._
 import kafkaci.models.github.GithubWebhook
 
 object Serdes {
-  def serde = new WrapperSerde[GithubWebhook](circeJsonSerializer[GithubWebhook], circeJsonDeserializer[GithubWebhook])
-  def serdes[T] = new WrapperSerde[T](circeJsonSerializer[T], circeJsonDeserializer[T])
+  def githubWebhookSerde = new WrapperSerde[GithubWebhook](circeJsonSerializer[GithubWebhook], circeJsonDeserializer[GithubWebhook])
+  def buildSerde = new WrapperSerde[Build](circeJsonSerializer[Build], circeJsonDeserializer[Build])
+//  def serdes[T] = new WrapperSerde[T](circeJsonSerializer[T], circeJsonDeserializer[T])
 }

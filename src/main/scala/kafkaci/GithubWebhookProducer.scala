@@ -19,7 +19,7 @@ object GithubWebhookProducer extends App{
 
   val songProducer = new KafkaProducer[String, GithubWebhook](props, new StringSerializer,circeJsonSerializer[GithubWebhook])
   while (true) {
-    songProducer.send(new ProducerRecord[String, GithubWebhook]("Github-Webhooks",GithubWebhook("suryagaddipati/meow")))
+    songProducer.send(new ProducerRecord[String, GithubWebhook]("Github-Webhooks","suryagaddipati/meow",GithubWebhook("suryagaddipati/meow")))
     Thread.sleep(1000L)
   }
 
