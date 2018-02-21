@@ -9,6 +9,7 @@ import kafkaci.models.Serdes._
 import kafkaci.models.github.GithubWebhook
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.{Consumed, KafkaStreams, StreamsConfig}
 
 object Main {
@@ -25,12 +26,12 @@ object Main {
     //repo-name/build
     val builds: KStreamS[String,Build] = githubWebhooks.leftJoin(githubWebhookCount,(hook:GithubWebhook,count: Long)  => Build(count+1,hook))
 
+    builds.to(BUILDS, Produced.`with`(Serdes.String,buildSerde))
     //repo-name/builds
     val buildTable: KGroupedStreamS[String,Build] = builds.groupBy((k,v)=>k)
     buildTable.aggregate()
 
 
-//      .to("build", Produced.`with`(Serdes.String,buildSerde))
 
     val streams = new KafkaStreams(builder.build, streamsConfiguration)
     streams.cleanUp()
