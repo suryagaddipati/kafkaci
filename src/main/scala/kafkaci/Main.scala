@@ -29,7 +29,7 @@ object Main {
     builds.to(BUILDS, Produced.`with`(Serdes.String,buildSerde))
     //repo-name/builds
     val buildTable: KGroupedStreamS[String,Build] = builds.groupBy((k,v)=>k)
-    buildTable.aggregate()
+//    buildTable.aggregate()
 
 
 
