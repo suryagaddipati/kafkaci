@@ -17,14 +17,14 @@ import org.apache.kafka.common.serialization.{Serde, Serdes}
 import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.state.{QueryableStoreTypes, ReadOnlyKeyValueStore}
 import org.apache.kafka.streams.{Consumed, KafkaStreams, StreamsConfig}
+import  Topics._
 
 import scala.io.StdIn
 
 object Main {
 
   val appServerPort = 9000
-  val GITHUB_WEBHOOKS = "Github-Webhooks"
-  val GITHUB_WEBHOOKS_COUNT = "Github-Webhooks-Count"
+
 
 
 
