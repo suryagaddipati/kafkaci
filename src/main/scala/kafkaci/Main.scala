@@ -14,26 +14,7 @@ import org.apache.kafka.streams.{Consumed, KafkaStreams, StreamsConfig}
 
 object Main {
   def main(args: Array[String]) {
-    val builder = new StreamsBuilderS()
-
-    //repo-name/hook
-    val githubWebhooks: KStreamS[String,GithubWebhook] = builder.stream[String, GithubWebhook](GITHUB_WEBHOOKS,Consumed.`with`(Serdes.String,githubWebhookSerde))
-
-
-    //repo-name/count
-    val githubWebhookCount: KTableS[String,Long] = githubWebhooks.map((k,v) => (k,v.repo)).groupBy((k,v) =>  k ).count(GITHUB_WEBHOOKS_COUNT)
-
-    //repo-name/build
-    val builds: KStreamS[String,Build] = githubWebhooks.leftJoin(githubWebhookCount,(hook:GithubWebhook,count: Long)  => Build(count+1,hook))
-
-    builds.to(BUILDS, Produced.`with`(Serdes.String,buildSerde))
-    //repo-name/builds
-    val buildTable: KGroupedStreamS[String,Build] = builds.groupBy((k,v)=>k)
-//    buildTable.aggregate()
-
-
-
-    val streams = new KafkaStreams(builder.build, streamsConfiguration)
+    val streams = new KafkaStreams(Topology.get, streamsConfiguration)
     streams.cleanUp()
     streams.start()
     ApiServer.start(streams)
