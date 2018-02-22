@@ -9,6 +9,7 @@ import akka.kafka.scaladsl.Producer
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import kafkaci.Topics._
+import kafkaci.models.Project
 import kafkaci.producers.Producers
 import kafkaci.util.StoreHelpers._
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -33,24 +34,36 @@ object ApiServer  extends App {
         .runWith(Producer.plainSink(producerSettings))
     }
 
-    val songCountStore = waitUntilStoreIsQueryable(GITHUB_WEBHOOKS_COUNT, QueryableStoreTypes.keyValueStore[String,Long],streams)
 
     val route =
-      path("count") {
-        get {
-          val count =  songCountStore.get("suryagaddipati/meow")
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1> Count: ${count}</h1>"))
-        }
-      } ~
-        ignoreTrailingSlash{
+      ignoreTrailingSlash{
+        path("webhook-count") {
+          get {
+            parameters('repo.as[String]) { repoName =>
+              val webhookCountStore = waitUntilStoreIsQueryable(GITHUB_WEBHOOKS_COUNT_STORE, QueryableStoreTypes.keyValueStore[String, Long], streams)
+              val count = webhookCountStore.get(repoName)
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1> Count: ${count}</h1>"))
+            }
+          }
+        } ~
           path("create-job") {
             post {
               (formField('repoName)) { (repoName) =>
                 complete(sendJobCreateRequest(repoName, system))
               }
             }
+          } ~
+          path("job") {
+            get {
+              parameters('name.as[String]){ name =>
+                val webhookCountStore = waitUntilStoreIsQueryable(PROJECTS_STORE, QueryableStoreTypes.keyValueStore[String,Project],streams)
+//                val count =   webhookCountStore.get("suryagaddipati/meow")
+                val count = webhookCountStore.get(name)
+                complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1> Count: ${count}</h1>"))
+              }
+            }
           }
-        }
+      }
 
     val bindingFuture = Http().bindAndHandle(route, "localhost", 9000) // get this from config
 
