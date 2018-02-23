@@ -1,6 +1,7 @@
 package kafkaci.producers
 
 import java.util.Properties
+import java.util.concurrent.Future
 
 import akka.actor.ActorSystem
 import akka.kafka.ProducerSettings
@@ -9,7 +10,7 @@ import akka.stream.scaladsl.Source
 import com.ovoenergy.kafka.serialization.circe._
 import kafkaci.Topics._
 import kafkaci.models.github.GithubWebhook
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization.StringSerializer
 // Import the Circe generic support
 import io.circe.generic.auto._
@@ -32,6 +33,8 @@ object Producers extends App{
   }
 
 
-
-      //new KafkaProducer[String, String](props)send(new ProducerRecord[String, String](JOB_CREATE_REQUESTS, reponame,reponame))
+  def projectCreateRequest(repo: String): Future[RecordMetadata] ={
+    val projectCreateRequestProducer = new KafkaProducer[String, String](props, new StringSerializer, new StringSerializer)
+    projectCreateRequestProducer.send(new ProducerRecord[String, String](PROJECT_CREATE_REQUESTS, repo,repo))
+  }
 }

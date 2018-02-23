@@ -13,12 +13,11 @@ import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.{Consumed, KafkaStreams, StreamsConfig}
 
 object Config {
-  def main(args: Array[String]) {
-    val streams = new KafkaStreams(Topology.get, streamsConfiguration)
-    streams.cleanUp()
-    streams.start()
-    ApiServer.start(streams)
-  }
+//  def main(args: Array[String]) {
+//    val streams = new KafkaStreams(Topology.get, streamsConfiguration)
+//    streams.cleanUp()
+//    streams.start()
+//  }
 
 
   def streamsConfiguration(): Properties ={

@@ -21,20 +21,18 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "com.ovoenergy" %% "kafka-serialization-core" % kafkaSerializationV,
       "com.ovoenergy" %% "kafka-serialization-circe" % kafkaSerializationV,
-      "com.typesafe.akka" %% "akka-stream-kafka" % "0.17",
       "io.circe" %% "circe-core" % "0.9.1",
       "io.circe" %% "circe-generic"  % "0.9.1",
       "io.circe" %% "circe-parser"  % "0.9.1",
       "com.lightbend" %% "kafka-streams-scala" % kafka_streams_scala_version,
-      "com.typesafe.akka" %% "akka-http"   % "10.1.0-RC2",
-      "com.typesafe.akka" %% "akka-stream" % "2.5.9",
 
 
       "org.scalatra" %% "scalatra" % ScalatraVersion,
       "org.scalatra" %% "scalatra-scalatest" % ScalatraVersion % "test",
       "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
       "org.eclipse.jetty" % "jetty-webapp" % "9.4.8.v20171121" % "container",
-      "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
+      "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
+      "org.scalatra" %% "scalatra-forms" % ScalatraVersion
     )
   )
 

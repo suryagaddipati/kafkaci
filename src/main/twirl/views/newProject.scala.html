@@ -1,0 +1,14 @@
+@()(implicit request: javax.servlet.http.HttpServletRequest)
+@import org.scalatra.forms.views._
+
+@layouts.html.default("KafkaCI: A continous delivery system built on top of Kafka", "New Project"){
+<form action="/new-project" method="POST" class="form-horizontal">
+    <div class="form-group @if(error("repo").nonEmpty){has-error}">
+    <label class="col-sm-2 control-label" for="repo">Repo (*):</label>
+    <div class="col-sm-10">
+        @Html(text("repo", "class" -> "form-control"))
+        <span class="error">@error("repo")</span>
+    </div>
+    </div>
+</form>
+}
