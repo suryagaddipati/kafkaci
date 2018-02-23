@@ -12,7 +12,7 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.kstream.Produced
 import org.apache.kafka.streams.{Consumed, KafkaStreams, StreamsConfig}
 
-object Main {
+object Config {
   def main(args: Array[String]) {
     val streams = new KafkaStreams(Topology.get, streamsConfiguration)
     streams.cleanUp()

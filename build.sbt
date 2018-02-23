@@ -13,6 +13,10 @@ lazy val root = (project in file(".")).
       version      := "0.1.0-SNAPSHOT"
     )),
     name := "KafkaCI",
+    javaOptions ++= Seq(
+      "-Xdebug",
+      "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
+    ),
 
     libraryDependencies ++= Seq(
       "com.ovoenergy" %% "kafka-serialization-core" % kafkaSerializationV,
