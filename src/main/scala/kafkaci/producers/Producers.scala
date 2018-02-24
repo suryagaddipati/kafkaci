@@ -14,8 +14,12 @@ import io.circe.generic.auto._
 
 
 object Producers extends App{
-  val props = new Properties
-  props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
+  def props = {
+    val props = new Properties
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
+    props
+  }
+
 
   githubWebhookProducer
 //  jobCreateRequestProducer

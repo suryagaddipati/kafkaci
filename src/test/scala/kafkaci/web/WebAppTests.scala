@@ -2,9 +2,9 @@ package kafkaci.web
 
 import org.scalatra.test.scalatest._
 
-class KafkaCIScalatraServletTests extends ScalatraFunSuite {
+class WebAppTests extends ScalatraFunSuite {
 
-  addServlet(classOf[KafkaCIScalatraServlet], "/*")
+  addServlet(classOf[WebApp], "/*")
 
   test("GET / on KafkaCIScalatraServlet should return status 200"){
     get("/"){

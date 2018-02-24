@@ -12,7 +12,7 @@ import org.apache.kafka.streams.processor.{ProcessorContext, StateStore}
 import org.apache.kafka.streams.state.{KeyValueBytesStoreSupplier, KeyValueStore, StoreBuilder, Stores}
 import org.apache.kafka.streams.{Consumed, Topology}
 
-object Topology {
+object KafkaCITopology {
 
 
 
@@ -30,10 +30,16 @@ object Topology {
 //    builder.addStateStore(projectsStoreBuilder)
 
     val projectCreateRequests: KStreamS[String,String] = builder.stream[String, String](PROJECT_CREATE_REQUESTS)
-    projectCreateRequests.map((k,v) => (k,Project(v))) to(PROJECTS,Produced.`with`(Serdes.String,projectSerde))
+    val projectStream = projectCreateRequests.map((k,v) => (k,Project(v)))
+      projectStream.to(PROJECTS,Produced.`with`(Serdes.String,projectSerde))
     val m :Materialized[String, Project, KeyValueStore[Bytes, Array[Byte]]] = Materialized.as[String,Project,  KeyValueStore[Bytes, Array[Byte]]](PROJECTS_STORE)
     val projectTable = builder.table(PROJECTS,Consumed.`with`(Serdes.String,projectSerde), m )
+    projectTable.toStream.print(Printed.toSysOut[String,Project])
 //    projectCreateRequests.transformValues(()=>  new ProjectRequestToProjectTransformer(),PROJECTS_STORE)
+    projectStream.map((k,v)=>{
+       print(k)
+      (k,v)
+    })
 
 
 

@@ -10,7 +10,7 @@ import org.scalatra._
 import org.scalatra.forms.{FormSupport, label, mapping, maxlength, required, text}
 import org.scalatra.i18n.I18nSupport
 
-class KafkaCIScalatraServlet(streams : KafkaStreams) extends ScalatraServlet with FormSupport with I18nSupport {
+class WebApp(streams : KafkaStreams) extends ScalatraServlet with FormSupport with I18nSupport {
 
   get("/") {
     views.html.hello()
@@ -25,12 +25,13 @@ class KafkaCIScalatraServlet(streams : KafkaStreams) extends ScalatraServlet wit
 
   case class NewProjectForm(repo: String)
   val form = mapping(
-    "repo"     -> label("Repo", text(required, maxlength(100))),
+    "repo"     -> label("Repository", text(required, maxlength(100))),
   )(NewProjectForm.apply)
 
   get("/new-project"){
     views.html.newProject()
   }
+
   post("/new-project"){
     validate(form)(
       errors => BadRequest(errors),
@@ -44,6 +45,10 @@ class KafkaCIScalatraServlet(streams : KafkaStreams) extends ScalatraServlet wit
     val name = params("name")
     val projectStore = waitUntilStoreIsQueryable(PROJECTS_STORE, QueryableStoreTypes.keyValueStore[String,Project],streams)
     Ok(projectStore.get(name))
+  }
+
+  post("/new-build"){
+
   }
 
 

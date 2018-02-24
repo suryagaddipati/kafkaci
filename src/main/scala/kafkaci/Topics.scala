@@ -10,5 +10,6 @@ object Topics {
   val PROJECTS_STORE = "kafkaCI.ProjectsStore"
 
   val BUILDS = "kafkaCI.Builds"
+  val BUILD_REQUEST = "kafkaCI.Builds"
 
 }
