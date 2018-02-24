@@ -3,10 +3,6 @@ package kafkaci.producers
 import java.util.Properties
 import java.util.concurrent.Future
 
-import akka.actor.ActorSystem
-import akka.kafka.ProducerSettings
-import akka.kafka.scaladsl.Producer
-import akka.stream.scaladsl.Source
 import com.ovoenergy.kafka.serialization.circe._
 import kafkaci.Topics._
 import kafkaci.models.github.GithubWebhook
