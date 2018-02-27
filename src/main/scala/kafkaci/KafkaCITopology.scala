@@ -32,43 +32,27 @@ object KafkaCITopology {
     val projectCreateRequests: KStreamS[String,String] = builder.stream[String, String](PROJECT_CREATE_REQUESTS)
     val projectStream = projectCreateRequests.map((k,v) => (k,Project(v)))
       projectStream.to(PROJECTS,Produced.`with`(Serdes.String,projectSerde))
-    val m :Materialized[String, Project, KeyValueStore[Bytes, Array[Byte]]] = Materialized.as[String,Project,  KeyValueStore[Bytes, Array[Byte]]](PROJECTS_STORE)
-    val projectTable = builder.table(PROJECTS,Consumed.`with`(Serdes.String,projectSerde), m )
-    projectTable.toStream.print(Printed.toSysOut[String,Project])
-//    projectCreateRequests.transformValues(()=>  new ProjectRequestToProjectTransformer(),PROJECTS_STORE)
-    projectStream.map((k,v)=>{
-       print(k)
-      (k,v)
-    })
+    val m :Materialized[String, Project, KeyValueStore[Bytes, Array[Byte]]] = Materialized.as[String,Project,  KeyValueStore[Bytes, Array[Byte]]](PROJECTS_STORE).withKeySerde(Serdes.String).withValueSerde(projectSerde)
+        val projectTable = builder.table(PROJECTS,Consumed.`with`(Serdes.String,projectSerde) )
+    projectTable.toStream.print(Printed.toSysOut[String,Project ].withLabel("Project-KTable"))
+    //    projectTable.toStream.print(Printed.toSysOut[String,Project])
+    ////    projectCreateRequests.transformValues(()=>  new ProjectRequestToProjectTransformer(),PROJECTS_STORE)
+    //    projectStream.map((k,v)=>{
+    //       print(k)
+    //      (k,v)
+    //    })
 
 
 
 
 
-    //repo-name/build
-    val builds: KStreamS[String,Build] = githubWebhooks.leftJoin(githubWebhookCount,(hook:GithubWebhook,count: Long)  => Build(count+1,hook))
-
-    builds.to(BUILDS, Produced.`with`(Serdes.String,buildSerde))
-    //repo-name/builds
-    val buildTable: KGroupedStreamS[String,Build] = builds.groupBy((k,v)=>k)
+//    //repo-name/build
+//    val builds: KStreamS[String,Build] = githubWebhooks.leftJoin(githubWebhookCount,(hook:GithubWebhook,count: Long)  => Build(count+1,hook))
+//
+//    builds.to(BUILDS, Produced.`with`(Serdes.String,buildSerde))
+//    //repo-name/builds
+//    val buildTable: KGroupedStreamS[String,Build] = builds.groupBy((k,v)=>k)
     //    buildTable.aggregate()
     builder.build
-  }
-
-  class ProjectRequestToProjectTransformer extends  ValueTransformer[String,Project]{
-    var stateStore: KeyValueStore[String,Project] = null
-    override def init(context: ProcessorContext): Unit = {
-      stateStore = context.getStateStore(PROJECTS_STORE).asInstanceOf[KeyValueStore[String,Project]]
-    }
-
-    override def punctuate(timestamp: Long): Project = null
-
-    override def transform(value: String): Project = {
-      val project = Project(value)
-      stateStore.put(value,project)
-      project
-    }
-
-    override def close(): Unit = { }
   }
 }
