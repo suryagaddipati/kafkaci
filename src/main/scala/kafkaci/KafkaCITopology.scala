@@ -1,15 +1,14 @@
 package kafkaci
 
-import com.lightbend.kafka.scala.streams.{KGroupedStreamS, KStreamS, KTableS, StreamsBuilderS}
+import com.lightbend.kafka.scala.streams.{KStreamS, KTableS, StreamsBuilderS}
 import kafkaci.Topics._
-import kafkaci.models.{Build, Project}
-import kafkaci.models.Serdes.{buildSerde, githubWebhookSerde, projectSerde}
+import kafkaci.models.Project
+import kafkaci.models.Serdes.{githubWebhookSerde, projectSerde}
 import kafkaci.models.github.GithubWebhook
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.kstream._
-import org.apache.kafka.streams.processor.{ProcessorContext, StateStore}
-import org.apache.kafka.streams.state.{KeyValueBytesStoreSupplier, KeyValueStore, StoreBuilder, Stores}
+import org.apache.kafka.streams.state.KeyValueStore
 import org.apache.kafka.streams.{Consumed, Topology}
 
 object KafkaCITopology {
